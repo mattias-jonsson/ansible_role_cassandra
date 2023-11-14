@@ -66,3 +66,4 @@
 - name: Change password for the cassandra user.
   ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
   when: inventory_hostname == play_hosts[-1]
+  no_log: true
