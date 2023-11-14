@@ -1,0 +1,9 @@
+---
+
+pkgs_to_install:
+  - chkconfig
+  - cassandra
+  - python-pip
+
+pkgs_to_install_ssl:
+  - python3-cryptography

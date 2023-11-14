@@ -1,0 +1,28 @@
+---
+
+ansible_role_cassandra_cluster_name: vCD Performance Metrics
+ansible_role_cassandra_commitlog_sync_period: 10s
+ansible_role_cassandra_commitlog_sync: periodic
+ansible_role_cassandra_keystore_password: changeit
+ansible_role_cassandra_listen_address: 10.0.2.15
+ansible_role_cassandra_manage_firewall: true
+ansible_role_cassandra_nodes:
+  - name: 'rocky91'
+    ip: '10.0.2.15'
+ansible_role_cassandra_prefer_ipv6: false
+ansible_role_cassandra_rpc_address: 10.0.2.15
+ansible_role_cassandra_seeds:
+  - 'rocky91'
+ansible_role_cassandra_ssl_cert_path: /etc/cassandra/certs
+ansible_role_cassandra_ssl_cert:
+ansible_role_cassandra_ssl_key_password: changeit
+ansible_role_cassandra_ssl_key:
+ansible_role_cassandra_truststore_password: changeit
+ansible_role_cassandra_password: 'Correct Horse Battery Staple'
+ansible_role_cassandra_ssl_enable: false
+ansible_role_cassandra_manage_firewalld: true
+ansible_role_cassandra_jmx_zone_ips:
+  - '127.0.0.1'
+
+ansible_role_cassandra_cql_zone_ips:
+  - '127.0.0.1'

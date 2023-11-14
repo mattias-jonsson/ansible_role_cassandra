@@ -1,0 +1,6 @@
+---
+
+ansible_role_cassandra_config_path: /etc/cassandra/conf/
+ansible_role_cassandra_keystore_type: jks
+ansible_role_cassandra_keystore: '{{ ansible_role_cassandra_config_path }}/.keystore'
+ansible_role_cassandra_truststore: '{{ ansible_role_cassandra_config_path }}/.truststore'

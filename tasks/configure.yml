@@ -1,0 +1,20 @@
+---
+
+- name: Add SSL certs and Java Keystore.
+  ansible.builtin.import_tasks:
+    file: ssl_cert.yml
+  when: ansible_role_cassandra_ssl_enable
+
+- name: Update Cassandra config
+  become: true
+  ansible.builtin.template:
+    src: cassandra.yaml.j2
+    dest: /etc/cassandra/conf/cassandra.yaml
+    owner: root
+    group: root
+    setype: etc_t
+    seuser: system_u
+    serole: object_r
+    mode: '0644'
+    selevel: s0
+  register: cassandra_config

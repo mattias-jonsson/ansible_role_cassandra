@@ -1,0 +1,35 @@
+---
+
+- name: Block for firewalld management
+  when: ansible_role_cassandra_manage_firewall | bool
+  block:
+
+    - name: Allow internode communication for Cassandra nodes
+      become: true
+      ansible.posix.firewalld:
+        zone: public
+        rich_rule: "rule family={{ 'ipv6' if item | ipaddr('ipv6') else 'ipv4' }} source address={{ item.ip }} port port=7000 protocol=tcp accept"
+        state: enabled
+        permanent: true
+        immediate: true
+      loop: "{{ ansible_role_cassandra_nodes }}"
+
+    - name: Allow CQL traffic
+      become: true
+      ansible.posix.firewalld:
+        zone: public
+        rich_rule: "rule family={{ 'ipv6' if item | ipaddr('ipv6') else 'ipv4' }} source address={{ item }} port port=9042 protocol=tcp accept"
+        state: enabled
+        permanent: true
+        immediate: true
+      loop: "{{ ansible_role_cassandra_cql_zone_ips }}"
+
+    - name: Allow JMX traffic
+      become: true
+      ansible.posix.firewalld:
+        zone: public
+        rich_rule: "rule family={{ 'ipv6' if item | ipaddr('ipv6') else 'ipv4' }} source address={{ item }} port port=7199 protocol=tcp accept"
+        immediate: true
+        state: enabled
+        permanent: true
+      loop: "{{ ansible_role_cassandra_jmx_zone_ips }}"

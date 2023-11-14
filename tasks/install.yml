@@ -1,0 +1,40 @@
+---
+
+- name: Add Cassandra repository.
+  ansible.builtin.yum_repository:
+    name: cassandra
+    description: Apache Cassandra
+    baseurl: https://redhat.cassandra.apache.org/41x/
+    gpgcheck: true
+    repo_gpgcheck: true
+    gpgkey: https://downloads.apache.org/cassandra/KEYS
+    enabled: true
+    setype: system_conf_t
+    seuser: system_u
+    serole: object_r
+    selevel: s0
+  become: true
+  register: cassandra_repo_task
+
+- name: Set crypto policy to temporary allow SHA1.
+  ansible.builtin.command: update-crypto-policies --set DEFAULT:SHA1
+  become: true
+  when: cassandra_repo_task.changed
+
+- name: Install Apache Cassandra and dependencies.
+  ansible.builtin.dnf:
+    name: "{{ pkgs_to_install + (pkgs_to_install_ssl if ansible_role_cassandra_ssl_enable | bool else []) }}"
+    state: present
+    update_cache: true
+  register: cassandra_install
+  become: true
+
+- name: Set crypto policy to default.
+  ansible.builtin.command: update-crypto-policies --set DEFAULT
+  become: true
+  when: cassandra_repo_task.changed
+
+- name: Install the cqlsh Python library
+  ansible.builtin.pip:
+    name: cqlsh
+    state: present

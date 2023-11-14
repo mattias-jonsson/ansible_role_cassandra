@@ -1,0 +1,68 @@
+---
+
+- name: Assert that the role is executed on a supported platform
+  ansible.builtin.assert:
+    that:
+      - (ansible_distribution_major_version | int) > 7
+      - ansible_distribution_file_variety == 'RedHat'
+    msg: 'This role only supports Enterprise Linux version 7 or greater.'
+    quiet: true
+
+- name: Include variables specific for the distribution.
+  ansible.builtin.include_vars: "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml"
+
+- name: Include install tasks.
+  ansible.builtin.import_tasks:
+    file: install.yml
+
+- name: Include configure tasks.
+  ansible.builtin.import_tasks:
+    file: configure.yml
+
+- name: Include firewall tasks.
+  ansible.builtin.import_tasks:
+    file: firewall.yml
+  when: ansible_role_cassandra_manage_firewalld
+
+- name: Enable and start Apache Cassandra service.
+  ansible.builtin.systemd:
+    name: cassandra
+    daemon_reload: true
+    state: started
+    enabled: true
+  become: true
+  register: cassandra_service_task
+
+- name: Wait for Cassandra daemon to complete startup.
+  ansible.builtin.wait_for:
+    path: /var/log/cassandra/system.log
+    search_regex: ^INFO\s+\[main\]\s+.+CassandraDaemon\.java:\d+\s+-\s+Startup\scomplete$
+    delay: 5
+  register: waitfor
+  when: cassandra_service_task.changed or cassandra_config.changed
+
+- name: Check for superuser creation on all nodes.
+  ansible.builtin.wait_for:
+    path: /var/log/cassandra/system.log
+    search_regex: ^INFO\s+\[OptionalTasks.*\]\s+.+CassandraRoleManager\.java:\d+\s+-\s+Created\sdefault\ssuperuser\srole\s'cassandra'$
+    delay: 5
+  register: waitfor
+  when: cassandra_service_task.changed or cassandra_config.changed
+  async: 60
+  poll: 0
+  ignore_errors: true
+
+- name: Wait for any node to confirm superuser creation.
+  ansible.builtin.async_status:
+    jid: "{{ waitfor.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished or job_result.failed
+  retries: 10
+  delay: 6
+  when: waitfor.ansible_job_id is defined
+  changed_when: false
+  run_once: true
+
+- name: Change password for the cassandra user.
+  ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
+  when: inventory_hostname == play_hosts[-1]

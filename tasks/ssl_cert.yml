@@ -1,0 +1,149 @@
+---
+
+- name: Create ssl_cert_path if missing.
+  ansible.builtin.file:
+    path: '{{ ansible_role_cassandra_ssl_cert_path }}'
+    state: directory
+  become: true
+
+- name: Check if SSL key and certificate exists.
+  ansible.builtin.stat:
+    path: '{{ ansible_role_cassandra_ssl_cert_path }}/{{ item }}'
+  register: stat_cert_exists
+  loop:
+    - certificate.key
+    - certificate.crt
+
+
+- name: Block for temporary certificates directory creation.
+  block:
+    - name: Create temporary directory on controller for certificates.
+      ansible.builtin.tempfile:
+        state: directory
+      delegate_to: localhost
+      run_once: true
+      register: temp_controller_cert_dir
+
+    - name: Create temporary directory on node for certificates.
+      ansible.builtin.tempfile:
+        state: directory
+      register: temp_node_cert_dir
+  when: false in stat_cert_exists.results | map(attribute='stat.exists') | list
+
+
+- name: Block for self-signed SSL cert.
+  block:
+    - name: Create self-signed private key
+      become: true
+      community.crypto.openssl_privatekey:
+        path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.key'
+        type: RSA
+        passphrase: '{{ ansible_role_cassandra_ssl_key_password }}'
+        cipher: auto
+        size: 4096
+        state: present
+
+    - name: Generate an OpenSSL Certificate Signing Request
+      become: true
+      community.crypto.openssl_csr:
+        path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.csr'
+        privatekey_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.key'
+        key_usage:
+          - keyEncipherment
+          - dataEncipherment
+        extended_key_usage:
+          - serverAuth
+          - clientAuth
+        locality_name: Stockholm
+        organization_name: Home
+        organizational_unit_name: Lab
+        state_or_province_name: Stockholms län
+        country_name: SE
+        privatekey_passphrase: '{{ ansible_role_cassandra_ssl_key_password }}'
+
+    - name: Create self-signed certificate.
+      become: true
+      community.crypto.x509_certificate:
+        path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.crt'
+        privatekey_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.key'
+        csr_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.csr'
+        privatekey_passphrase: '{{ ansible_role_cassandra_ssl_key_password }}'
+        provider: selfsigned
+        state: present
+
+    - name: Get generated certificate from node.
+      become: true
+      ansible.builtin.fetch:
+        src: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.crt'
+        dest: '{{ temp_controller_cert_dir.path }}'
+
+  when:
+   - (not ansible_role_cassandra_ssl_key) or (not ansible_role_cassandra_ssl_cert)
+   - false in (stat_cert_exists.results | map(attribute='stat.exists') | list)
+
+
+# TODO insert support for user certs
+
+- name: Copy all node certificates to every nodes tempdir
+  become: true
+  ansible.builtin.copy:
+    src: '{{ temp_controller_cert_dir.path }}/{{ item }}/etc/cassandra/certs/certificate.crt'
+    dest: '{{ temp_node_cert_dir.path }}/{{ item }}_certificate.crt'
+  loop: "{{ ansible_role_cassandra_nodes | map(attribute='name') | list }}"
+  register: certificate_copy_operation
+  when: false in stat_cert_exists.results | map(attribute='stat.exists') | list
+
+
+- name: Block for Java keystore
+  block:
+
+    - name: Create Java Keystore
+      become: true
+      community.general.java_keystore:
+        name: cassandra
+        certificate_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.crt'
+        private_key_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.key'
+        private_key_passphrase: '{{ ansible_role_cassandra_ssl_key_password }}'
+        dest: "{{ ansible_role_cassandra_keystore }}"
+        password: '{{ ansible_role_cassandra_keystore_password }}'
+        keystore_type: '{{ ansible_role_cassandra_keystore_type }}'
+
+    - name: Create Java truststore
+      become: true
+      community.general.java_keystore:
+        name: cassandra
+        certificate_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.crt'
+        private_key_path: '{{ ansible_role_cassandra_ssl_cert_path }}/certificate.key'
+        private_key_passphrase: '{{ ansible_role_cassandra_ssl_key_password }}'
+        dest: "{{ ansible_role_cassandra_truststore }}"
+        password: '{{ ansible_role_cassandra_truststore_password }}'
+        keystore_type: '{{ ansible_role_cassandra_keystore_type }}'
+
+    - name: Import node certificates into the truststore
+      become: true
+      community.general.java_cert:
+        cert_path: '{{ temp_node_cert_dir.path }}/{{ item }}_certificate.crt'
+        keystore_path: "{{ ansible_role_cassandra_truststore }}"
+        keystore_pass: '{{ ansible_role_cassandra_truststore_password }}'
+        state: present
+        cert_alias: '{{ item }}_node_cert'
+      loop: "{{ ansible_role_cassandra_nodes | map(attribute='name') | list }}"
+
+  when:
+    - false in stat_cert_exists.results | map(attribute='stat.exists') | list
+
+
+- name: Block for temporary certificates directory deletion.
+  block:
+    - name: Delete temporary certificate directory on controller.
+      ansible.builtin.file:
+        path: '{{ temp_controller_cert_dir.path }}'
+        state: absent
+      delegate_to: localhost
+
+    - name: Delete temporary certificate directory on node.
+      ansible.builtin.file:
+        path: '{{ temp_node_cert_dir.path }}'
+        state: absent
+  when:
+    - false in stat_cert_exists.results | map(attribute='stat.exists') | list
