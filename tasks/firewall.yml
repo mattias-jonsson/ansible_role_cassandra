@@ -8,7 +8,7 @@
       become: true
       ansible.posix.firewalld:
         zone: public
-        rich_rule: "rule family={{ 'ipv6' if item.ip | ipaddr('ipv6') else 'ipv4' }} source address={{ item.ip }} port port=7000 protocol=tcp accept"
+        rich_rule: "rule family=ipv4 source address={{ item.ip }} port port=7000 protocol=tcp accept"
         state: enabled
         permanent: true
         immediate: true
@@ -18,7 +18,7 @@
       become: true
       ansible.posix.firewalld:
         zone: public
-        rich_rule: "rule family={{ 'ipv6' if item | ipaddr('ipv6') else 'ipv4' }} source address={{ item }} port port=9042 protocol=tcp accept"
+        rich_rule: "rule family=ipv4 source address={{ item }} port port=9042 protocol=tcp accept"
         state: enabled
         permanent: true
         immediate: true
@@ -28,7 +28,7 @@
       become: true
       ansible.posix.firewalld:
         zone: public
-        rich_rule: "rule family={{ 'ipv6' if item | ipaddr('ipv6') else 'ipv4' }} source address={{ item }} port port=7199 protocol=tcp accept"
+        rich_rule: "rule family=ipv4 source address={{ item }} port port=7199 protocol=tcp accept"
         immediate: true
         state: enabled
         permanent: true
