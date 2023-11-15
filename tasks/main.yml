@@ -24,6 +24,7 @@
     file: firewall.yml
   when: ansible_role_cassandra_manage_firewalld
 
+
 - name: Enable and start Apache Cassandra service.
   ansible.builtin.systemd:
     name: cassandra
@@ -31,15 +32,41 @@
     state: started
     enabled: true
   become: true
-  register: cassandra_service_task
+  register: cassandra_seeds_service_task
+  when: inventory_hostname in ansible_role_cassandra_seeds
 
-- name: Wait for Cassandra daemon to complete startup.
+- name: Wait for Cassandra seed nodes to reach NORMAL state
   ansible.builtin.wait_for:
     path: /var/log/cassandra/system.log
-    search_regex: ^INFO\s+\[main\]\s+.+CassandraDaemon\.java:\d+\s+-\s+Startup\scomplete$
-    delay: 5
-  register: waitfor
-  when: cassandra_service_task.changed or cassandra_config.changed
+    search_regex: "^INFO.*Node .* state jump to NORMAL$"
+    delay: 10
+  when:
+    - inventory_hostname in ansible_role_cassandra_seeds
+    - cassandra_seeds_service_task.changed or cassandra_config.changed
+
+
+- name: Block for startup handling of remaining nodes
+  block:
+    - name: Enable and start Apache Cassandra service.
+      ansible.builtin.systemd:
+        name: cassandra
+        daemon_reload: true
+        state: started
+        enabled: true
+      become: true
+      register: cassandra_service_task
+
+    - name: Wait for Cassandra daemon to complete startup.
+      ansible.builtin.wait_for:
+        path: /var/log/cassandra/system.log
+        search_regex: ^INFO\s+\[main\]\s+.+CassandraDaemon\.java:\d+\s+-\s+Startup\scomplete$
+        delay: 5
+      register: waitfor
+      when: cassandra_service_task.changed or cassandra_config.changed
+  when:
+    - cassandra_config.changed
+    - inventory_hostname not in ansible_role_cassandra_seeds
+
 
 - name: Check for superuser creation on all nodes.
   ansible.builtin.wait_for:

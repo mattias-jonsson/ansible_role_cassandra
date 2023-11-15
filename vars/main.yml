@@ -1,6 +1,9 @@
 ---
 
-ansible_role_cassandra_config_path: /etc/cassandra/conf/
-ansible_role_cassandra_keystore_type: jks
-ansible_role_cassandra_keystore: '{{ ansible_role_cassandra_config_path }}/.keystore'
-ansible_role_cassandra_truststore: '{{ ansible_role_cassandra_config_path }}/.truststore'
+ansible_role_cassandra_config_dir: /etc/cassandra/conf
+ansible_role_cassandra_keystore_type: pkcs12
+ansible_role_cassandra_keystore: '{{ ansible_role_cassandra_config_dir }}/certs/.pks12.keystore'
+ansible_role_cassandra_truststore: '{{ ansible_role_cassandra_config_dir }}/certs/.truststore'
+
+ansible_role_cassandra_ssl_cert_dir: '{{ ansible_role_cassandra_config_dir }}/certs'
+ansible_role_cassandra_truststore_dir: '{{ ansible_role_cassandra_config_dir }}/certs'
