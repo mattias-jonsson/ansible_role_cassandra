@@ -22,7 +22,7 @@
         state: enabled
         permanent: true
         immediate: true
-      loop: "{{ ansible_role_cassandra_cql_zone_ips }}"
+      loop: "{{ ansible_role_cassandra_cql_ips }}"
 
     - name: Allow JMX traffic
       become: true
@@ -32,4 +32,4 @@
         immediate: true
         state: enabled
         permanent: true
-      loop: "{{ ansible_role_cassandra_jmx_zone_ips }}"
+      loop: "{{ ansible_role_cassandra_jmx_ips }}"

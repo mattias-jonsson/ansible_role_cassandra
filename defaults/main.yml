@@ -22,8 +22,8 @@ ansible_role_cassandra_password: 'Correct Horse Battery Staple'
 ansible_role_cassandra_ssl_enable: false
 
 ansible_role_cassandra_manage_firewalld: true
-ansible_role_cassandra_jmx_zone_ips:
+ansible_role_cassandra_jmx_ips:
   - '127.0.0.1'
 
-ansible_role_cassandra_cql_zone_ips:
+ansible_role_cassandra_cql_ips:
   - '127.0.0.1'
