@@ -1324,7 +1324,7 @@ server_encryption_options:
   # When set to true, encrypted and unencrypted connections are allowed on the storage_port
   # This should _only be true_ while in unencrypted or transitional operation
   # optional defaults to true if internode_encryption is none
-  # optional: true
+  optional: false
   # If enabled, will open up an encrypted listening socket on ssl_storage_port. Should only be used
   # during upgrade to 4.0; otherwise, set to false.
   legacy_ssl_storage_port_enabled: false
@@ -1337,14 +1337,14 @@ server_encryption_options:
     # Must be an instance of org.apache.cassandra.security.ISslContextFactory
     class_name: org.apache.cassandra.security.DefaultSslContextFactory
   # Verify peer server certificates
-  require_client_auth: false
+  # require_client_auth: true
   # Set to a valid trustore if require_client_auth is true
   truststore: {{ ansible_role_cassandra_truststore }}
   truststore_password: {{ ansible_role_cassandra_truststore_password }}
   # Verify that the host name in the certificate matches the connected host
   require_endpoint_verification: false
   # More advanced defaults:
-  protocol: TLSv1.3
+  protocol: TLSv1.2
   store_type: {{ ansible_role_cassandra_keystore_type }}
   # cipher_suites: [
   #   TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -1381,12 +1381,12 @@ client_encryption_options:
     # Must be an instance of org.apache.cassandra.security.ISslContextFactory
     class_name: org.apache.cassandra.security.DefaultSslContextFactory
   # Verify client certificates
-  require_client_auth: false
+  # require_client_auth: true
   # Set trustore and truststore_password if require_client_auth is true
   truststore: {{ ansible_role_cassandra_truststore }}
   truststore_password: {{ ansible_role_cassandra_truststore_password }}
   # More advanced defaults:
-  protocol: TLSv1.3
+  protocol: TLSv1.2
   store_type: {{ ansible_role_cassandra_keystore_type }}
   # cipher_suites: [
   #   TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,

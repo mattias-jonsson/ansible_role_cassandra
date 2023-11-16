@@ -1,0 +1,20 @@
+---
+
+- name: Enable and start Apache Cassandra service.
+  ansible.builtin.systemd:
+    name: cassandra
+    daemon_reload: true
+    state: started
+    enabled: true
+  become: true
+  delegate_to: "{{ item }}"
+  register: cassandra_service_task
+
+- name: Wait for Cassandra daemon to complete startup.
+  ansible.builtin.wait_for:
+    path: /var/log/cassandra/system.log
+    search_regex: ^INFO\s+\[main\]\s+.+CassandraDaemon\.java:\d+\s+-\s+Startup\scomplete$
+    delay: 5
+  delegate_to: "{{ item }}"
+  register: waitfor
+  when: cassandra_service_task.changed or cassandra_config.changed

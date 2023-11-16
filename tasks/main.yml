@@ -24,7 +24,6 @@
     file: firewall.yml
   when: ansible_role_cassandra_manage_firewalld
 
-
 - name: Enable and start Apache Cassandra service.
   ansible.builtin.systemd:
     name: cassandra
@@ -44,37 +43,13 @@
     - inventory_hostname in ansible_role_cassandra_seeds
     - cassandra_seeds_service_task.changed or cassandra_config.changed
 
-
-- name: Block for startup handling of remaining nodes
-  block:
-    - name: Enable and start Apache Cassandra service.
-      ansible.builtin.systemd:
-        name: cassandra
-        daemon_reload: true
-        state: started
-        enabled: true
-      become: true
-      register: cassandra_service_task
-
-    - name: Wait for Cassandra daemon to complete startup.
-      ansible.builtin.wait_for:
-        path: /var/log/cassandra/system.log
-        search_regex: ^INFO\s+\[main\]\s+.+CassandraDaemon\.java:\d+\s+-\s+Startup\scomplete$
-        delay: 5
-      register: waitfor
-      when: cassandra_service_task.changed or cassandra_config.changed
-  when:
-    - cassandra_config.changed
-    - inventory_hostname not in ansible_role_cassandra_seeds
-
-
-- name: Check for superuser creation on all nodes.
+- name: Check for superuser creation.
   ansible.builtin.wait_for:
     path: /var/log/cassandra/system.log
     search_regex: ^INFO\s+\[OptionalTasks.*\]\s+.+CassandraRoleManager\.java:\d+\s+-\s+Created\sdefault\ssuperuser\srole\s'cassandra'$
     delay: 5
   register: waitfor
-  when: cassandra_service_task.changed or cassandra_config.changed
+  when: cassandra_seeds_service_task.changed or cassandra_config.changed
   async: 60
   poll: 0
   ignore_errors: true
@@ -91,6 +66,16 @@
   run_once: true
 
 - name: Change password for the cassandra user.
-  ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
-  when: inventory_hostname == play_hosts[-1]
+  ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' {{'--ssl' if ansible_role_cassandra_ssl_enable }} -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
+  when: inventory_hostname == play_hosts[0]
+  environment:
+    SSL_CERTFILE: '{{ ansible_role_cassandra_ssl_cert_dir }}/certificate.pem'
   no_log: true
+
+- name: Include install tasks.
+  ansible.builtin.include_tasks:
+    file: service_start.yml
+  loop: "{{ ansible_play_hosts_all }}"
+  when:
+    - cassandra_config.changed
+    - inventory_hostname not in ansible_role_cassandra_seeds
