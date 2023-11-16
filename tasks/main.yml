@@ -65,14 +65,14 @@
   changed_when: false
   run_once: true
 
-- name: Change password for the cassandra user.
+- name: Change password for the Cassandra user.
   ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' {{'--ssl' if ansible_role_cassandra_ssl_enable }} -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
   when: inventory_hostname == play_hosts[0]
   environment:
     SSL_CERTFILE: '{{ ansible_role_cassandra_ssl_cert_dir }}/certificate.pem'
   no_log: true
 
-- name: Include install tasks.
+- name: Include tasks to enable and start Cassandra service.
   ansible.builtin.include_tasks:
     file: service_start.yml
   loop: "{{ ansible_play_hosts_all }}"
