@@ -4,7 +4,7 @@ ansible_role_cassandra_allocate_tokens_for_local_replication_factor: 3
 ansible_role_cassandra_batch_size_fail_threshold: 50KiB
 ansible_role_cassandra_batch_size_warn_threshold: 5KiB
 ansible_role_cassandra_cas_contention_timeout: 1000ms
-ansible_role_cassandra_cluster_name: vCD Performance Metrics
+ansible_role_cassandra_cluster_name:
 ansible_role_cassandra_cql_ips:
   - '127.0.0.1'
 ansible_role_cassandra_commitlog_segment_size: 32MiB
@@ -18,21 +18,18 @@ ansible_role_cassandra_counter_write_request_timeout: 5000ms
 ansible_role_cassandra_jmx_ips:
   - '127.0.0.1'
 ansible_role_cassandra_keystore_password: changeit
-ansible_role_cassandra_listen_address: 10.0.2.15
+ansible_role_cassandra_listen_address:
 ansible_role_cassandra_manage_firewall: true
 ansible_role_cassandra_manage_firewalld: true
 ansible_role_cassandra_max_hints_delivery_threads: 2
 ansible_role_cassandra_nodes:
-  - name: 'rocky91'
-    ip: '10.0.2.15'
 ansible_role_cassandra_num_tokens: 16
-ansible_role_cassandra_password: 'Correct Horse Battery Staple'
+ansible_role_cassandra_password:
 ansible_role_cassandra_prefer_ipv6: false
 ansible_role_cassandra_range_request_timeout: 10000ms
 ansible_role_cassandra_read_request_timeout: 5000ms
-ansible_role_cassandra_rpc_address: 10.0.2.15
-ansible_role_cassandra_seeds:
-  - 'rocky91'
+ansible_role_cassandra_rpc_address:
+ansible_role_cassandra_seeds: []
 ansible_role_cassandra_ssl_cert:
 ansible_role_cassandra_ssl_enable: false
 ansible_role_cassandra_ssl_key_password: changeit

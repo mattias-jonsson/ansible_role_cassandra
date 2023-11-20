@@ -1,3 +1,16 @@
-# Collections list
 collections:
+  - ansible.posix
   - community.crypto
+  - community.general
+
+galaxy_info:
+  role_name: ansible_role_cassandra
+  author: Mattias Jonsson
+  description: Role to install and configure Apache Cassandra
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: EL
+      versions:
+        - "7"
+        - "8"
