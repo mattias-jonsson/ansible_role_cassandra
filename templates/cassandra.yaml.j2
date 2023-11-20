@@ -1,10 +1,10 @@
 cluster_name: '{{ ansible_role_cassandra_cluster_name }}'
-num_tokens: 16
-allocate_tokens_for_local_replication_factor: 3
+num_tokens: {{ ansible_role_cassandra_num_tokens }}
+allocate_tokens_for_local_replication_factor: {{ ansible_role_cassandra_allocate_tokens_for_local_replication_factor }}
 hinted_handoff_enabled: true
 max_hint_window: 3h
 hinted_handoff_throttle: 1024KiB
-max_hints_delivery_threads: 2
+max_hints_delivery_threads: {{ ansible_role_cassandra_max_hints_delivery_threads }}
 hints_directory: /var/lib/cassandra/hints
 hints_flush_period: 10000ms
 max_hints_file_size: 128MiB
@@ -34,20 +34,20 @@ counter_cache_save_period: 7200s
 saved_caches_directory: /var/lib/cassandra/saved_caches
 commitlog_sync: {{ ansible_role_cassandra_commitlog_sync }}
 commitlog_sync_period: {{ ansible_role_cassandra_commitlog_sync_period }}
-commitlog_segment_size: 32MiB
+commitlog_segment_size: {{ ansible_role_cassandra_commitlog_segment_size }}
 seed_provider:
   - class_name: org.apache.cassandra.locator.SimpleSeedProvider
     parameters:
       - seeds: "{{ ansible_role_cassandra_nodes | selectattr('name', 'in', ansible_role_cassandra_seeds) | map(attribute='ip') | join(',') }}"
-concurrent_reads: 32
-concurrent_writes: 32
+concurrent_reads: {{ ansible_role_cassandra_concurrent_reads }}
+concurrent_writes: {{ ansible_role_cassandra_concurrent_writes }}
 concurrent_counter_writes: 32
 concurrent_materialized_view_writes: 32
 memtable_allocation_type: heap_buffers
 index_summary_capacity:
 index_summary_resize_interval: 60m
 trickle_fsync: false
-trickle_fsync_interval: 10240KiB
+trickle_fsync_interval: {{ ansible_role_cassandra_trickle_fsync_interval }}
 storage_port: 7000
 ssl_storage_port: 7001
 listen_address: {{ ansible_role_cassandra_listen_address }}
@@ -63,14 +63,14 @@ snapshot_links_per_second: 0
 column_index_size: 64KiB
 column_index_cache_size: 2KiB
 concurrent_materialized_view_builders: 1
-compaction_throughput: 64MiB/s
+compaction_throughput: {{ ansible_role_cassandra_compaction_throughput }}
 sstable_preemptive_open_interval: 50MiB
 uuid_sstable_identifiers_enabled: false
-read_request_timeout: 5000ms
-range_request_timeout: 10000ms
-write_request_timeout: 2000ms
-counter_write_request_timeout: 5000ms
-cas_contention_timeout: 1000ms
+read_request_timeout: {{ ansible_role_cassandra_read_request_timeout }}
+range_request_timeout: {{ ansible_role_cassandra_range_request_timeout }}
+write_request_timeout: {{ ansible_role_cassandra_write_request_timeout }}
+counter_write_request_timeout: {{ ansible_role_cassandra_counter_write_request_timeout }}
+cas_contention_timeout: {{ ansible_role_cassandra_cas_contention_timeout }}
 truncate_request_timeout: 60000ms
 request_timeout: 10000ms
 slow_query_log_timeout: 500ms
@@ -140,10 +140,10 @@ tombstone_failure_threshold: 100000
 replica_filtering_protection:
     cached_rows_warn_threshold: 2000
     cached_rows_fail_threshold: 32000
-batch_size_warn_threshold: 5KiB
-batch_size_fail_threshold: 50KiB
+batch_size_warn_threshold: {{ ansible_role_cassandra_batch_size_warn_threshold }}
+batch_size_fail_threshold: {{ ansible_role_cassandra_batch_size_fail_threshold }}
 unlogged_batch_across_partitions_warn_threshold: 10
-compaction_large_partition_warning_threshold: 100MiB
+compaction_large_partition_warning_threshold: {{ ansible_role_cassandra_compaction_large_partition_warning_threshold }}
 compaction_tombstone_warning_threshold: 100000
 audit_logging_options:
   enabled: false
