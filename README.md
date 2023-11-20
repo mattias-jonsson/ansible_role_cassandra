@@ -27,7 +27,7 @@ Role Variables
 | `ansible_role_cassandra_batch_size_fail_threshold` | '50KiB' | Maximum batch size before write fails. |
 | `ansible_role_cassandra_batch_size_warn_threshold` | '5KiB' | Maximum batch size before warning is logged. |
 | `ansible_role_cassandra_cas_contention_timeout` | '1000ms' | Timeout for compare-and-set operations. |
-| `ansible_role_cassandra_cluster_name` | 'vCD Performance Metrics' | Name of the Cassandra cluster. |
+| `ansible_role_cassandra_cluster_name` | | Name of the Cassandra cluster. |
 | `ansible_role_cassandra_cql_ips` | ['127.0.0.1'] | List of IP addresses for CQL communication. |
 | `ansible_role_cassandra_commitlog_segment_size` | '32MiB' | Size of each commit log segment. |
 | `ansible_role_cassandra_commitlog_sync_period` | '10s' | Interval for syncing the commit log to disk. |
