@@ -38,3 +38,4 @@
   ansible.builtin.pip:
     name: cqlsh
     state: present
+  when: inventory_hostname in ansible_role_cassandra_seeds

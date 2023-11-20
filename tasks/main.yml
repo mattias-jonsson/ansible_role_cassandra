@@ -49,7 +49,9 @@
     search_regex: ^INFO\s+\[OptionalTasks.*\]\s+.+CassandraRoleManager\.java:\d+\s+-\s+Created\sdefault\ssuperuser\srole\s'cassandra'$
     delay: 5
   register: waitfor
-  when: cassandra_seeds_service_task.changed or cassandra_config.changed
+  when:
+    - cassandra_install.changed
+    - inventory_hostname in ansible_role_cassandra_seeds
   async: 60
   poll: 0
   ignore_errors: true
@@ -67,7 +69,7 @@
 
 - name: Change password for the Cassandra user.
   ansible.builtin.command: cqlsh {{ ansible_role_cassandra_listen_address }} -u cassandra -p 'cassandra' {{'--ssl' if ansible_role_cassandra_ssl_enable }} -e "ALTER USER cassandra WITH PASSWORD '{{ ansible_role_cassandra_password }}';"
-  when: inventory_hostname == play_hosts[0]
+  when: inventory_hostname == ansible_role_cassandra_seeds[0]
   environment:
     SSL_CERTFILE: '{{ ansible_role_cassandra_ssl_cert_dir }}/certificate.pem'
   no_log: true
