@@ -75,9 +75,6 @@
    - (not ansible_role_cassandra_ssl_key) or (not ansible_role_cassandra_ssl_cert)
    - false in (stat_cert_exists.results | map(attribute='stat.exists') | list)
 
-
-# TODO insert support for user certs
-
 - name: Copy all node certificates to every nodes tempdir
   become: true
   ansible.builtin.copy:
@@ -86,7 +83,25 @@
   loop: "{{ ansible_role_cassandra_nodes | map(attribute='name') | list }}"
   register: certificate_copy_operation
   when: false in stat_cert_exists.results | map(attribute='stat.exists') | list
+  vars:
+    source_path: >-
+      {% if ansible_role_cassandra_ssl_enable %}
+        '{{ temp_controller_cert_dir.path }}/{{ item }}{{ ansible_role_cassandra_ssl_cert_dir }}/certificate.pem'
+      {% else %}
+        '{{ ansible_role_cassandra_ssl_cert }}'
+      {% endif %}
 
+- name: Copy certificate key to nodes
+  become: true
+  ansible.builtin.copy:
+    src: '{{ ansible_role_cassandra_ssl_key }}'
+    dest: '{{ ansible_role_cassandra_ssl_cert_dir }}/certificate.key'
+  loop: "{{ ansible_role_cassandra_nodes | map(attribute='name') | list }}"
+  register: certificate_copy_operation
+  when:
+   - false in stat_cert_exists.results | map(attribute='stat.exists') | list
+   - ansible_role_cassandra_ssl_key
+   - ansible_role_cassandra_ssl_cert
 
 - name: Block for Java keystore
   block:
